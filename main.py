@@ -39,6 +39,12 @@ def sanitize_number_variance(df, column_name, precision):
         if not pd.api.types.is_numeric_dtype(df[column_name]):
             raise TypeError(f"Column '{column_name}' is not numeric. Please select a numeric column.")
 
+        # pandas rounds half to even, following numpy: a value exactly
+        # halfway between two rounded results goes to the even neighbour
+        # (2.5 rounds to 2 at precision 0), not away from zero as many
+        # readers expect. That is the right default for reducing
+        # variance without a systematic upward bias, but it is worth
+        # knowing before comparing against a spreadsheet.
         df[column_name] = df[column_name].round(precision)
         return df
     except KeyError as e:
