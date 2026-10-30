@@ -1,3 +1,5 @@
+![Banner](banner.png)
+
 # ds-sanitize-NumberVarianceReducer
 Command-line tool that reduces the precision of numerical data (e.g., rounding to nearest integer or specified decimal place) to minimize re-identification risks from statistical analysis. Accepts a CSV or JSON file and a column name as input. Uses the pandas library. - Focused on Tools for anonymizing and redacting sensitive data within datasets and files. Supports techniques like data masking, pseudonymization, and generalization to protect privacy while retaining data utility for testing and development. Leverages libraries for data generation and dataframe manipulation.
 
