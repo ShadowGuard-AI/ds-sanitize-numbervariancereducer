@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import logging
 import sys
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -15,7 +16,8 @@ def setup_argparse():
     parser.add_argument('input_file', type=str, help='The input CSV or JSON file.')
     parser.add_argument('column_name', type=str, help='The name of the column to sanitize.')
     parser.add_argument('--precision', type=int, default=0, help='The number of decimal places to round to. Defaults to 0 (nearest integer).')
-    parser.add_argument('--output_file', type=str, help='The output file (CSV or JSON). If not specified, the input file is overwritten.', required=False)
+    parser.add_argument('--output_file', type=str, help='The output file (CSV or JSON). It must not be the input file. If not specified, --in-place is required to overwrite the input file.', required=False)
+    parser.add_argument('--in-place', action='store_true', help='Overwrite the input file in place. Only used when --output_file is not given.')
     parser.add_argument('--file_type', type=str, choices=['csv', 'json'], help='Specify the file type: csv or json. If not specified, it will be inferred from the file extension.')
     return parser
 
@@ -64,7 +66,16 @@ def main():
     input_file = args.input_file
     column_name = args.column_name
     precision = args.precision
-    output_file = args.output_file if args.output_file else input_file  # Overwrite if no output file is specified
+    if args.output_file:
+        if Path(args.output_file).resolve() == Path(input_file).resolve():
+            logging.error("Output file must not be the input file. Choose a different output file, or run with --in-place and no --output_file to overwrite the input.")
+            sys.exit(1)
+        output_file = args.output_file
+    elif args.in_place:
+        output_file = input_file
+    else:
+        logging.error("No output file was given and --in-place was not set. Choose one: pass --output_file for a separate output file, or pass --in-place to overwrite the input file.")
+        sys.exit(1)
     file_type = args.file_type
 
     try:
@@ -119,7 +130,7 @@ if __name__ == "__main__":
 
 # Usage Examples:
 # 1. Round values in 'transaction_amount' column of 'data.csv' to the nearest integer and overwrite the file:
-#    python main.py data.csv transaction_amount
+#    python main.py data.csv transaction_amount --in-place
 #
 # 2. Round values in 'latitude' column of 'data.json' to 2 decimal places and save to 'sanitized_data.json':
 #    python main.py data.json latitude --precision 2 --output_file sanitized_data.json
