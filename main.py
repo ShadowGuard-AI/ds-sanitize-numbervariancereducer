@@ -47,6 +47,11 @@ def sanitize_number_variance(df, column_name, precision):
         # readers expect. That is the right default for reducing
         # variance without a systematic upward bias, but it is worth
         # knowing before comparing against a spreadsheet.
+        # Nothing here checks whether rounding changed a single value. A
+        # column that is already at the requested precision comes out
+        # identical and the run still reports completion. A negative
+        # precision is also accepted and rounds to tens or hundreds, which
+        # is a legitimate use, but no help text anywhere says it works.
         df[column_name] = df[column_name].round(precision)
         return df
     except KeyError as e:
@@ -101,7 +106,14 @@ def main():
         # Sanitize the data
         df = sanitize_number_variance(df, column_name, precision)
 
-        # Write the output
+        # The writer follows the INPUT type, never the output file's name:
+        # a CSV input written to a path ending in .json produces CSV text
+        # in a .json file. JSON output is always records orient, whatever
+        # shape the input JSON had, so a column orient input comes back
+        # with a different structure than it went in with. In place writes
+        # go straight at the input path with no temporary file, so a crash
+        # mid write leaves the original truncated; the data survives only
+        # because the whole frame was read into memory first.
         if file_type == 'csv':
             df.to_csv(output_file, index=False)
         elif file_type == 'json':
